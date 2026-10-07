@@ -758,60 +758,102 @@
 
   function handleQuickUpload(input) { handleGalleryUpload(input); showTab('gallery'); }
 
-  let currentPair = { sketch: null, model: null };
+  const IMGBB_API_KEY = 'ad6ee389f62e41c5be1477cd8f3b9e14';
+
+  async function uploadToImgBB(file) {
+    const formData = new FormData();
+    formData.append('image', file);
+    const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    if (data && data.success) {
+      return data.data.url;
+    }
+    throw new Error('فشل الرفع للسحابة');
+  }
+
+  let currentPairFiles = { sketchFile: null, modelFile: null };
 
   function previewPairImage(input, previewId) {
     if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
     const reader = new FileReader();
     reader.onload = (e) => {
       if (previewId === 'sketchPreview') {
-        currentPair.sketch = e.target.result;
-        document.getElementById('sketchText').textContent = '✅ تم اختيار الرسمة';
+        currentPairFiles.sketchFile = file;
+        document.getElementById('sketchText').textContent = '✅ جاهز للرفع السحابي';
       } else {
-        currentPair.model = e.target.result;
-        document.getElementById('modelText').textContent = '✅ تم اختيار المجسم';
+        currentPairFiles.modelFile = file;
+        document.getElementById('modelText').textContent = '✅ جاهز للرفع السحابي';
       }
       const previewEl = document.getElementById(previewId);
       previewEl.style.display = 'block';
       previewEl.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;"/>`;
     };
-    reader.readAsDataURL(input.files[0]);
+    reader.readAsDataURL(file);
   }
 
-  function savePairedArtwork() {
-    if (!currentPair.sketch && !currentPair.model) {
+  async function savePairedArtwork() {
+    if (!currentPairFiles.sketchFile && !currentPairFiles.modelFile) {
       alert('الرجاء اختيار صورة واحدة على الأقل (الرسمة أو المجسم)!');
       return;
     }
-    const name = document.getElementById('newArtName')?.value || 'عمل فني جديد';
-    const category = document.getElementById('newArtCategory')?.value || 'فن حديثي';
 
-    gallery.unshift({
-      id: Date.now(),
-      name: name,
-      category: category,
-      sketchSrc: currentPair.sketch,
-      modelSrc: currentPair.model,
-      src: currentPair.model || currentPair.sketch, // fallback
-      date: new Date().toLocaleDateString('ar')
-    });
+    const saveBtn = event.target;
+    const originalText = saveBtn.textContent;
+    saveBtn.textContent = '⏳ جاري الرفع السحابي للإنترنت...';
+    saveBtn.disabled = true;
 
-    localStorage.setItem('gallery', JSON.stringify(gallery));
-    renderGallery();
-    updateStats();
-    updateMockupArtSelect();
-    showAlert('galleryAlert', '🎉 تم حفظ العمل المتكامل في إطار واحد بنجاح!');
+    try {
+      let sketchCloudUrl = null;
+      let modelCloudUrl = null;
 
-    // Reset inputs
-    currentPair = { sketch: null, model: null };
-    document.getElementById('sketchUpload').value = '';
-    document.getElementById('modelUpload').value = '';
-    document.getElementById('sketchPreview').style.display = 'none';
-    document.getElementById('modelPreview').style.display = 'none';
-    document.getElementById('sketchText').textContent = 'اختر الرسمة اليدوية';
-    document.getElementById('modelText').textContent = 'اختر صورة المنتج المجسم';
-    document.getElementById('newArtName').value = '';
-    document.getElementById('newArtCategory').value = '';
+      if (currentPairFiles.sketchFile) {
+        sketchCloudUrl = await uploadToImgBB(currentPairFiles.sketchFile);
+      }
+      if (currentPairFiles.modelFile) {
+        modelCloudUrl = await uploadToImgBB(currentPairFiles.modelFile);
+      }
+
+      const name = document.getElementById('newArtName')?.value || 'عمل فني جديد';
+      const category = document.getElementById('newArtCategory')?.value || 'فن حديثي';
+
+      gallery.unshift({
+        id: Date.now(),
+        name: name,
+        category: category,
+        sketchSrc: sketchCloudUrl,
+        modelSrc: modelCloudUrl,
+        src: modelCloudUrl || sketchCloudUrl,
+        date: new Date().toLocaleDateString('ar')
+      });
+
+      localStorage.setItem('gallery', JSON.stringify(gallery));
+      renderGallery();
+      updateStats();
+      updateMockupArtSelect();
+      showAlert('galleryAlert', '🌐 تم الرفع سحابياً بنجاح! الصورة الآن متاحة لكل العالم!');
+
+      // Reset inputs
+      currentPairFiles = { sketchFile: null, modelFile: null };
+      document.getElementById('sketchUpload').value = '';
+      document.getElementById('modelUpload').value = '';
+      document.getElementById('sketchPreview').style.display = 'none';
+      document.getElementById('modelPreview').style.display = 'none';
+      document.getElementById('sketchText').textContent = 'اختر الرسمة اليدوية';
+      document.getElementById('modelText').textContent = 'اختر صورة المنتج المجسم';
+      document.getElementById('newArtName').value = '';
+      document.getElementById('newArtCategory').value = '';
+
+    } catch (err) {
+      console.error(err);
+      alert('حدث خطأ أثناء الرفع السحابي. يرجى المحاولة مرة أخرى.');
+    } finally {
+      saveBtn.textContent = originalText;
+      saveBtn.disabled = false;
+    }
   }
 
   function renderGallery() {
@@ -885,19 +927,23 @@
     `).join('');
   }
 
-  function uploadProductCustomImage(prodId, input) {
+  async function uploadProductCustomImage(prodId, input) {
     if (!input.files || !input.files[0]) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
+    const file = input.files[0];
+    showAlert('productsAlert', '⏳ جاري رفع صورة المنتج للسحابة...');
+    try {
+      const cloudUrl = await uploadToImgBB(file);
       const p = products.find(x => x.id === prodId);
       if (p) {
-        p.customImage = e.target.result;
+        p.customImage = cloudUrl;
         localStorage.setItem('products', JSON.stringify(products));
         renderProducts();
-        showAlert('productsAlert', '✅ تم رفع الصورة المجسمة بنجاح!');
+        showAlert('productsAlert', '🌐 تم رفع صورة المنتج سحابياً بنجاح!');
       }
-    };
-    reader.readAsDataURL(input.files[0]);
+    } catch (e) {
+      console.error(e);
+      showAlert('productsAlert', '❌ فشل الرفع السحابي، حاول مرة أخرى.', true);
+    }
   }
 
   function updateProduct(id, field, value) {
