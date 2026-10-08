@@ -512,18 +512,20 @@
         <div id="productsAlert" class="alert alert-success"></div>
         <div class="card">
           <h3>📋 قائمة المنتجات</h3>
-          <table class="products-table">
-            <thead>
-              <tr>
-                <th>صورة المنتج المجسمة</th>
-                <th>اسم المنتج</th>
-                <th>السعر</th>
-                <th>السعر القديم</th>
-                <th>إجراء</th>
-              </tr>
-            </thead>
-            <tbody id="productsTableBody"></tbody>
-          </table>
+          <div style="overflow-x: auto; width: 100%; padding-bottom: 15px;">
+            <table class="products-table" style="min-width: 600px;">
+              <thead>
+                <tr>
+                  <th>صورة المنتج المجسمة</th>
+                  <th>اسم المنتج</th>
+                  <th>السعر</th>
+                  <th>السعر القديم</th>
+                  <th>إجراء</th>
+                </tr>
+              </thead>
+              <tbody id="productsTableBody"></tbody>
+            </table>
+          </div>
           <div style="margin-top:20px;display:flex;gap:10px">
             <button class="btn btn-gold" onclick="saveProducts()">💾 حفظ التغييرات</button>
             <button class="btn btn-outline" onclick="addProduct()">➕ إضافة منتج</button>
