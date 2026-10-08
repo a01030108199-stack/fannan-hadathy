@@ -783,9 +783,16 @@
     }).join('');
   }
 
-  function setAsStoreProduct(artId, productTitle, mockupType) {
+  async function setAsStoreProduct(artId, productTitle, mockupType) {
     const art = gallery.find(g => g.id == artId);
     if (!art) return;
+    
+    // تغيير شكل الزر ليظهر حالة النشر
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '⏳ جاري الإضافة والنشر للعالم...';
+    btn.disabled = true;
+
     const cleanName = productTitle.split(' ')[1] || 'منتج فني';
     const newProduct = {
       id: Date.now(),
@@ -802,8 +809,21 @@
     localStorage.setItem('products', JSON.stringify(products));
     renderProducts();
     
+    // النشر التلقائي على الإنترنت
+    try {
+      await publishToGitHub();
+    } catch (e) {
+      console.error(e);
+    }
+    
+    btn.innerHTML = '✅ تمت الإضافة والنشر بنجاح!';
+    
     // Automatically open main website directly at the store products section
-    window.open('index.html#products', '_blank');
+    setTimeout(() => {
+      window.open('index.html#products', '_blank');
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }, 1500);
   }
 
   function handleQuickUpload(input) { handleGalleryUpload(input); showTab('gallery'); }
