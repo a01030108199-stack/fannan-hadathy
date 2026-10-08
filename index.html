@@ -1061,131 +1061,114 @@
     if(e.target === this) closeModal();
   });
 
-  // Load dynamic data from Admin Panel (localStorage)
-  function loadDynamicData() {
+  // ============================================================
+  // LOAD DATA — يقرأ أولاً من data.json (عالمي لكل الأجهزة)
+  // ثم يتحقق من localStorage كاحتياطي للأعمال المحفوظة محلياً
+  // ============================================================
+  const DATA_URL = 'https://raw.githubusercontent.com/a01030108199-stack/fannan-hadathy/main/data.json?t=' + Date.now();
+
+  function renderGlobalGallery(items) {
+    if (!items || items.length === 0) return;
+    const galleryContainer = document.querySelector('.gallery-grid');
+    if (!galleryContainer) return;
+    galleryContainer.innerHTML = items.map(item => {
+      if (item.sketchSrc && item.modelSrc) {
+        return `
+          <div class="gallery-item visible" style="border:1px solid rgba(201,168,76,0.3);background:var(--dark2);display:flex;flex-direction:column;border-radius:6px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+            <div style="position:relative;flex:1;height:50%;overflow:hidden;border-bottom:1px solid rgba(201,168,76,0.2);background:#111">
+              <span style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.75);border:1px solid var(--gold);color:var(--gold);font-size:0.7rem;padding:3px 8px;border-radius:3px;z-index:2">🪑 المجسم الواقعي 3D</span>
+              <img src="${item.modelSrc}" alt="${item.name} - مجسم" style="width:100%;height:100%;object-fit:cover;transition:transform 0.5s;"/>
+            </div>
+            <div style="position:relative;flex:1;height:50%;overflow:hidden;background:#181818">
+              <span style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.75);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:0.7rem;padding:3px 8px;border-radius:3px;z-index:2">✏️ السكتش والرسم اليدوي</span>
+              <img src="${item.sketchSrc}" alt="${item.name} - رسمة" style="width:100%;height:100%;object-fit:cover;transition:transform 0.5s;"/>
+            </div>
+            <div style="padding:15px;background:rgba(15,15,15,0.95);border-top:1px solid rgba(201,168,76,0.2);display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <h3 class="ar" style="font-size:1.1rem;color:var(--white);margin-bottom:3px">${item.name}</h3>
+                <p class="ar" style="color:var(--gold);font-size:0.8rem;letter-spacing:1px">${item.category || 'أثاث نحتي معاصر'}</p>
+              </div>
+              <span style="border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:0.7rem;padding:4px 10px;border-radius:20px">عمل فني متكامل</span>
+            </div>
+          </div>
+        `;
+      }
+      return `
+        <div class="gallery-item visible">
+          <img src="${item.src || item.modelSrc || item.sketchSrc}" alt="${item.name}" style="width:100%;height:100%;object-fit:cover;"/>
+          <div class="gallery-overlay">
+            <div class="gallery-info">
+              <h3 class="ar">${item.name}</h3>
+              <p class="ar">${item.category || 'إسلام محمد محمود'}</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderGlobalProducts(prodItems) {
+    if (!prodItems || prodItems.length === 0) return;
+    const prodContainer = document.querySelector('.products-grid');
+    if (!prodContainer) return;
+    prodContainer.innerHTML = prodItems.map(p => {
+      let visualHtml = p.icon || '🎨';
+      if (p.customImage) {
+        visualHtml = `<img src="${p.customImage}" style="width:100%;height:100%;object-fit:cover;" alt="${p.name}"/>`;
+      } else if (p.image) {
+        visualHtml = `<img src="${p.image}" style="width:100%;height:100%;object-fit:cover;" alt="${p.name}"/>`;
+      } else if (p.artSrc) {
+        if (p.mockupType === 'mug') {
+          visualHtml = `<div style="position:relative;width:80px;height:90px;"><div style="position:absolute;right:-14px;top:20px;width:24px;height:50px;border:7px solid #e0e0e0;border-radius:0 20px 20px 0;"></div><div style="position:absolute;inset:0;background:linear-gradient(to right, #cfcfcf 0%, #ffffff 40%, #e8e8e8 80%, #b8b8b8 100%);border-radius:4px 4px 14px 14px;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 8px 16px rgba(0,0,0,0.5);"><img src="${p.artSrc}" style="width:65%;height:65%;object-fit:contain;mix-blend-mode:multiply;filter:contrast(1.1);" alt="${p.name}"/></div></div>`;
+        } else if (p.mockupType === 'frame') {
+          visualHtml = `<div style="width:100px;height:120px;background:linear-gradient(135deg,#d4af37,#aa820a,#ffd700);padding:6px;border-radius:3px;box-shadow:0 10px 20px rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;"><div style="width:100%;height:100%;background:#f4f4f0;padding:6px;display:flex;align-items:center;justify-content:center;overflow:hidden;"><img src="${p.artSrc}" style="max-width:100%;max-height:100%;object-fit:contain;mix-blend-mode:multiply;" alt="${p.name}"/></div></div>`;
+        } else {
+          visualHtml = `<div style="position:relative;width:130px;height:130px;display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 100 100" style="width:100%;height:100%;fill:#2b2b2b;filter:drop-shadow(0 6px 12px rgba(0,0,0,0.6));"><path d="M 30,15 L 40,22 C 45,24 55,24 60,22 L 70,15 L 88,28 L 78,42 L 70,36 L 70,88 C 70,90 68,92 65,92 L 35,92 C 32,92 30,90 30,88 L 30,36 L 22,42 L 12,28 Z" /></svg><div style="position:absolute;top:38%;left:50%;transform:translate(-50%, -50%);width:45px;height:45px;display:flex;align-items:center;justify-content:center;overflow:hidden;"><img src="${p.artSrc}" style="max-width:100%;max-height:100%;mix-blend-mode:multiply;filter:contrast(1.2);" alt="${p.name}"/></div></div>`;
+        }
+      }
+      return `
+        <div class="product-card visible" onclick="openOrder('${p.name}')">
+          <div class="product-img" style="position:relative;background:#151515;display:flex;align-items:center;justify-content:center;">
+            ${visualHtml}
+            ${p.badge ? `<div class="product-badge">${p.badge}</div>` : ''}
+          </div>
+          <div class="product-info">
+            <h3 class="ar">${p.name}</h3>
+            <div class="price">${p.oldPrice ? `<span>${p.oldPrice}</span>` : ''}${p.price}</div>
+            <button class="btn-order ar" onclick="openOrder('${p.name}')">اطلب الآن عبر واتساب</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function loadDynamicData() {
+    // 1) محاولة تحميل البيانات العالمية من data.json (GitHub)
+    try {
+      const res = await fetch(DATA_URL);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.gallery && data.gallery.length > 0) {
+          renderGlobalGallery(data.gallery);
+        }
+        if (data.products && data.products.length > 0) {
+          renderGlobalProducts(data.products);
+        }
+        return; // تم التحميل العالمي — لا حاجة لـ localStorage
+      }
+    } catch (e) {
+      console.warn('data.json غير متوفر، نحاول localStorage...', e);
+    }
+
+    // 2) احتياطياً: قراءة من localStorage (الجهاز الحالي فقط)
     const savedGallery = localStorage.getItem('gallery');
     if (savedGallery) {
-      try {
-        const items = JSON.parse(savedGallery);
-        if (items.length > 0) {
-          const galleryContainer = document.querySelector('.gallery-grid');
-          if (galleryContainer) {
-            galleryContainer.innerHTML = items.map(item => {
-              // If it's a paired artwork (sketch + model)
-              if (item.sketchSrc && item.modelSrc) {
-                return `
-                  <div class="gallery-item visible" style="border:1px solid rgba(201,168,76,0.3);background:var(--dark2);display:flex;flex-direction:column;border-radius:6px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.5);">
-                    <!-- Top Half: 3D Model -->
-                    <div style="position:relative;flex:1;height:50%;overflow:hidden;border-bottom:1px solid rgba(201,168,76,0.2);background:#111">
-                      <span style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.75);border:1px solid var(--gold);color:var(--gold);font-size:0.7rem;padding:3px 8px;border-radius:3px;z-index:2">🪑 المجسم الواقعي 3D</span>
-                      <img src="${item.modelSrc}" alt="${item.name} - مجسم" style="width:100%;height:100%;object-fit:cover;transition:transform 0.5s;"/>
-                    </div>
-                    <!-- Bottom Half: Sketch -->
-                    <div style="position:relative;flex:1;height:50%;overflow:hidden;background:#181818">
-                      <span style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.75);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:0.7rem;padding:3px 8px;border-radius:3px;z-index:2">✏️ السكتش والرسم اليدوي</span>
-                      <img src="${item.sketchSrc}" alt="${item.name} - رسمة" style="width:100%;height:100%;object-fit:cover;transition:transform 0.5s;"/>
-                    </div>
-                    <!-- Unified Info & Category Footer -->
-                    <div style="padding:15px;background:rgba(15,15,15,0.95);border-top:1px solid rgba(201,168,76,0.2);display:flex;justify-content:space-between;align-items:center;">
-                      <div>
-                        <h3 class="ar" style="font-size:1.1rem;color:var(--white);margin-bottom:3px">${item.name}</h3>
-                        <p class="ar" style="color:var(--gold);font-size:0.8rem;letter-spacing:1px">${item.category || 'أثاث نحتي معاصر'}</p>
-                      </div>
-                      <span style="border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:0.7rem;padding:4px 10px;border-radius:20px">عمل فني متكامل</span>
-                    </div>
-                  </div>
-                `;
-              }
-
-              // Fallback for single image
-              return `
-                <div class="gallery-item visible">
-                  <img src="${item.src || item.modelSrc || item.sketchSrc}" alt="${item.name}" style="width:100%;height:100%;object-fit:cover;"/>
-                  <div class="gallery-overlay">
-                    <div class="gallery-info">
-                      <h3 class="ar">${item.name}</h3>
-                      <p class="ar">${item.category || 'إسلام محمد محمود'}</p>
-                    </div>
-                  </div>
-                </div>
-              `;
-            }).join('');
-          }
-        }
-      } catch (e) { console.error(e); }
+      try { renderGlobalGallery(JSON.parse(savedGallery)); } catch (e) { console.error(e); }
     }
-
     const savedProducts = localStorage.getItem('products');
     if (savedProducts) {
-      try {
-        const prodItems = JSON.parse(savedProducts);
-        if (prodItems.length > 0) {
-          const prodContainer = document.querySelector('.products-grid');
-          if (prodContainer) {
-            prodContainer.innerHTML = prodItems.map(p => {
-              let visualHtml = p.icon || '🎨';
-              if (p.customImage) {
-                visualHtml = `
-                  <img src="${p.customImage}" style="width:100%;height:100%;object-fit:cover;" alt="${p.name}"/>
-                `;
-              } else if (p.artSrc) {
-                if (p.mockupType === 'mug') {
-                  visualHtml = `
-                    <div style="position:relative;width:80px;height:90px;">
-                      <div style="position:absolute;right:-14px;top:20px;width:24px;height:50px;border:7px solid #e0e0e0;border-radius:0 20px 20px 0;"></div>
-                      <div style="position:absolute;inset:0;background:linear-gradient(to right, #cfcfcf 0%, #ffffff 40%, #e8e8e8 80%, #b8b8b8 100%);border-radius:4px 4px 14px 14px;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 8px 16px rgba(0,0,0,0.5);">
-                        <img src="${p.artSrc}" style="width:65%;height:65%;object-fit:contain;mix-blend-mode:multiply;filter:contrast(1.1);" alt="${p.name}"/>
-                      </div>
-                    </div>
-                  `;
-                } else if (p.mockupType === 'frame') {
-                  visualHtml = `
-                    <div style="width:100px;height:120px;background:linear-gradient(135deg,#d4af37,#aa820a,#ffd700);padding:6px;border-radius:3px;box-shadow:0 10px 20px rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;">
-                      <div style="width:100%;height:100%;background:#f4f4f0;padding:6px;display:flex;align-items:center;justify-content:center;overflow:hidden;">
-                        <img src="${p.artSrc}" style="max-width:100%;max-height:100%;object-fit:contain;mix-blend-mode:multiply;" alt="${p.name}"/>
-                      </div>
-                    </div>
-                  `;
-                } else if (p.mockupType === 'pillow') {
-                  visualHtml = `
-                    <div style="width:110px;height:110px;background:linear-gradient(135deg, #e6e6e6, #fbfbfb, #d8d8d8);border-radius:20px;box-shadow:0 8px 20px rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">
-                      <img src="${p.artSrc}" style="width:60%;height:60%;object-fit:contain;mix-blend-mode:multiply;" alt="${p.name}"/>
-                    </div>
-                  `;
-                } else {
-                  // Default T-Shirt
-                  visualHtml = `
-                    <div style="position:relative;width:130px;height:130px;display:flex;align-items:center;justify-content:center;">
-                      <svg viewBox="0 0 100 100" style="width:100%;height:100%;fill:#2b2b2b;filter:drop-shadow(0 6px 12px rgba(0,0,0,0.6));">
-                        <path d="M 30,15 L 40,22 C 45,24 55,24 60,22 L 70,15 L 88,28 L 78,42 L 70,36 L 70,88 C 70,90 68,92 65,92 L 35,92 C 32,92 30,90 30,88 L 30,36 L 22,42 L 12,28 Z" />
-                      </svg>
-                      <div style="position:absolute;top:38%;left:50%;transform:translate(-50%, -50%);width:45px;height:45px;display:flex;align-items:center;justify-content:center;overflow:hidden;">
-                        <img src="${p.artSrc}" style="max-width:100%;max-height:100%;mix-blend-mode:multiply;filter:contrast(1.2);" alt="${p.name}"/>
-                      </div>
-                    </div>
-                  `;
-                }
-              }
-
-              return `
-                <div class="product-card visible" onclick="openOrder('${p.name}')">
-                  <div class="product-img" style="position:relative;background:#151515;display:flex;align-items:center;justify-content:center;">
-                    ${visualHtml}
-                    ${p.badge ? `<div class="product-badge">${p.badge}</div>` : ''}
-                  </div>
-                  <div class="product-info">
-                    <h3 class="ar">${p.name}</h3>
-                    <div class="price">${p.oldPrice ? `<span>${p.oldPrice}</span>` : ''}${p.price}</div>
-                    <button class="order-btn ar">اطلب الآن عبر واتساب</button>
-                  </div>
-                </div>
-              `;
-            }).join('');
-          }
-        }
-      } catch (e) { console.error(e); }
+      try { renderGlobalProducts(JSON.parse(savedProducts)); } catch (e) { console.error(e); }
     }
-
     const savedSettings = localStorage.getItem('siteSettings');
     if (savedSettings) {
       try {

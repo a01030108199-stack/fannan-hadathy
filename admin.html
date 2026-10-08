@@ -546,6 +546,26 @@
             <button class="btn btn-gold" onclick="changePassword()">🔑 تغيير</button>
           </div>
         </div>
+
+        <!-- GITHUB SYNC CARD -->
+        <div class="card" style="margin-top:20px;border:1px solid rgba(201,168,76,0.4)">
+          <h3>🌐 نشر البيانات عالمياً على كل الأجهزة</h3>
+          <p style="color:var(--gray);font-size:0.85rem;margin-bottom:15px">
+            بعد رفع الصور، اضغط هنا لنشر المعرض والمنتجات لكل زوار الموقع من أي جهاز في العالم.
+          </p>
+          <div class="form-group">
+            <label>🔑 GitHub Token (مرة واحدة فقط - يُحفظ تلقائياً)</label>
+            <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" 
+              oninput="localStorage.setItem('ghToken', this.value)"/>
+            <p style="color:var(--gray);font-size:0.75rem;margin-top:5px">
+              📌 احصل على التوكن من: <a href="https://github.com/settings/tokens/new?scopes=repo&description=fannan-hadathy" target="_blank" style="color:var(--gold)">github.com/settings/tokens</a> ← اختر فقط "repo" وانسخ التوكن هنا
+            </p>
+          </div>
+          <div id="syncAlert" class="alert alert-success"></div>
+          <button class="btn btn-gold" style="width:100%;padding:12px;font-size:1rem" onclick="publishToGitHub()">
+            🚀 نشر البيانات الآن — يظهر فوراً لكل العالم
+          </button>
+        </div>
       </div>
 
     </div>
@@ -603,6 +623,12 @@
   }
 
   function initAdmin() {
+    // Load saved GitHub token
+    const savedToken = localStorage.getItem('ghToken');
+    if (savedToken) {
+      const tokenInput = document.getElementById('githubToken');
+      if (tokenInput) tokenInput.value = savedToken;
+    }
     renderGallery();
     renderProducts();
     updateStats();
@@ -757,6 +783,72 @@
   }
 
   function handleQuickUpload(input) { handleGalleryUpload(input); showTab('gallery'); }
+
+  // ============================================================
+  // GITHUB SYNC - نشر البيانات عالمياً
+  // ============================================================
+  const GITHUB_REPO = 'a01030108199-stack/fannan-hadathy';
+  const GITHUB_FILE = 'data.json';
+
+  async function publishToGitHub() {
+    const token = document.getElementById('githubToken')?.value || localStorage.getItem('ghToken');
+    if (!token || token.length < 10) {
+      showAlert('syncAlert', '❌ يرجى إدخال GitHub Token أولاً من الإعدادات!', true);
+      showTab('settings');
+      return;
+    }
+    localStorage.setItem('ghToken', token);
+
+    const btn = event?.target;
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ جاري النشر...'; }
+
+    try {
+      // Get current file SHA (required to update)
+      const headRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}`, {
+        headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+      });
+      let sha = null;
+      if (headRes.ok) {
+        const headData = await headRes.json();
+        sha = headData.sha;
+      }
+
+      // Build data object
+      const dataObj = {
+        gallery: gallery,
+        products: products,
+        settings: JSON.parse(localStorage.getItem('siteSettings') || '{}'),
+        updatedAt: new Date().toISOString()
+      };
+
+      const content = btoa(unescape(encodeURIComponent(JSON.stringify(dataObj, null, 2))));
+      const body = { message: 'تحديث البيانات - ' + new Date().toLocaleString('ar'), content };
+      if (sha) body.sha = sha;
+
+      const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (res.ok) {
+        showAlert('syncAlert', '🌐 تم النشر! سيظهر على كل الأجهزة خلال دقيقة واحدة!');
+      } else {
+        const errData = await res.json();
+        console.error(errData);
+        showAlert('syncAlert', `❌ خطأ: ${errData.message || 'فشل النشر'}`, true);
+      }
+    } catch (err) {
+      console.error(err);
+      showAlert('syncAlert', '❌ خطأ في الاتصال. تأكد من صحة التوكن.', true);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '🚀 نشر البيانات الآن — يظهر فوراً لكل العالم'; }
+    }
+  }
 
   const IMGBB_API_KEY = 'ad6ee389f62e41c5be1477cd8f3b9e14';
 

@@ -1,0 +1,33 @@
+{
+  "gallery": [
+    {
+      "id": 1728245000001,
+      "name": "عرش العنقاء - The Phoenix",
+      "category": "تصميم أثاث نحتي",
+      "sketchSrc": "chair_sketch.jpg",
+      "modelSrc": "chair_3d.jpg",
+      "src": "chair_3d.jpg",
+      "date": "٧/١٠/٢٠٢٦"
+    }
+  ],
+  "products": [
+    {
+      "id": 1001,
+      "name": "كرسي عرش العنقاء",
+      "nameEn": "Phoenix Throne Chair",
+      "price": "15,000 ج",
+      "oldPrice": "",
+      "category": "أثاث",
+      "desc": "كرسي فريد من تصميم الفنان إسلام محمد محمود، مستوحى من أسطورة طائر العنقاء",
+      "image": "chair_3d.jpg",
+      "badge": "حصري",
+      "active": true
+    }
+  ],
+  "settings": {
+    "artistName": "إسلام محمد محمود",
+    "brandName": "فنان حديثي",
+    "whatsapp": "201021225542"
+  },
+  "updatedAt": "2026-10-08T11:00:00.000Z"
+}
