@@ -818,12 +818,11 @@
     
     btn.innerHTML = '✅ تمت الإضافة والنشر بنجاح!';
     
-    // Automatically open main website directly at the store products section
+    // إرجاع الزر لشكله الطبيعي بعد ثانيتين دون فتح نوافذ جديدة
     setTimeout(() => {
-      window.open('index.html#products', '_blank');
       btn.innerHTML = originalText;
       btn.disabled = false;
-    }, 1500);
+    }, 2000);
   }
 
   function handleQuickUpload(input) { handleGalleryUpload(input); showTab('gallery'); }
