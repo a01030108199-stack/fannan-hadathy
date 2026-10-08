@@ -1065,7 +1065,7 @@
   // LOAD DATA — يقرأ أولاً من data.json (عالمي لكل الأجهزة)
   // ثم يتحقق من localStorage كاحتياطي للأعمال المحفوظة محلياً
   // ============================================================
-  const DATA_URL = 'https://raw.githubusercontent.com/a01030108199-stack/fannan-hadathy/main/data.json?t=' + Date.now();
+  const DATA_URL = 'data.json?t=' + Date.now();
 
   function renderGlobalGallery(items) {
     if (!items || items.length === 0) return;
