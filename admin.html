@@ -622,13 +622,37 @@
     event.currentTarget.classList.add('active');
   }
 
-  function initAdmin() {
+  async function initAdmin() {
     // Load saved GitHub token
     const savedToken = localStorage.getItem('ghToken');
     if (savedToken) {
       const tokenInput = document.getElementById('githubToken');
       if (tokenInput) tokenInput.value = savedToken;
     }
+
+    // 🔥 SYNC ADMIN DATA FROM CLOUD 🔥
+    // قراءة البيانات من السحابة وتحديث لوحة التحكم فور الدخول
+    try {
+      const DATA_URL = 'https://raw.githubusercontent.com/a01030108199-stack/fannan-hadathy/main/data.json?t=' + Date.now();
+      const res = await fetch(DATA_URL);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.gallery) {
+          gallery = data.gallery;
+          localStorage.setItem('gallery', JSON.stringify(gallery));
+        }
+        if (data.products) {
+          products = data.products;
+          localStorage.setItem('products', JSON.stringify(products));
+        }
+        if (data.settings) {
+          localStorage.setItem('siteSettings', JSON.stringify(data.settings));
+        }
+      }
+    } catch (err) {
+      console.warn("Could not fetch global data, falling back to local storage", err);
+    }
+
     renderGallery();
     renderProducts();
     updateStats();
